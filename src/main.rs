@@ -12,23 +12,8 @@ use helpers::{
 };
 use std::process::Command;
 
-fn mx() {
-    let output = Command::new("solc")
-        .arg("--version")
-        .output()
-        .expect("Failed to run solc command");
+fn main() {
 
-    if output.status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("solc version: {}", stdout);
-    } else {
-        eprintln!(
-            "Please install solc and add it to your PATH - more details on https://docs.soliditylang.org/en/v0.8.17/installing-solidity.html"
-        );
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error running solc command: {}", stderr);
-        std::process::exit(1);
-    }
 
     let matches = App::new("Sol2Huff")
         .version("0.1.0")
@@ -53,20 +38,29 @@ fn mx() {
         .arg(Arg::with_name("verbose").short("v").long("verbose").help("Prints verbose output"))
         .get_matches();
 
-    let contracts_dir = matches.value_of("contracts").unwrap_or_else(|| "contracts");
-    let artifacts_dir = matches.value_of("artifacts").unwrap_or_else(|| "artifacts");
+    let contracts_dir = matches.value_of("contracts").unwrap_or_else(|| "$PWD/contracts");
+    let artifacts_dir = matches.value_of("artifacts").unwrap_or_else(|| "$PWD/artifacts");
     let verbose = matches.is_present("verbose");
 
-    compile_solidity(contracts_dir);
+    for file in fs::read_dir(contracts_dir).unwrap() {
+        let file = file.unwrap();
+        let path = file.path();
+        let file_name = path.file_name().unwrap().to_str().unwrap();
+        if file_name.ends_with(".sol") {
+            compile_solidity(file_name);
+        }
+    }
+    
     let json_files = find_all_json_files(artifacts_dir);
     let sol_files = find_all_sol_files(contracts_dir);
 
     for (file_name, _) in sol_files.iter() {
         println!("INFO:Transpiling {}...", file_name);
+
     }
 }
 
-fn main() {
+fn maixn() {
     let project = Project::builder()
         .paths(ProjectPathsConfig::hardhat(env!("CARGO_MANIFEST_DIR")).unwrap())
         .build()

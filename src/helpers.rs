@@ -1,18 +1,44 @@
 // helpers.rs
 
 use ethers_solc::{ Project, ProjectPathsConfig };
-use murph::{parser, formatter};
+use murph::{ parser, formatter };
 use std::fs;
 use std::collections::HashMap;
 use serde_json::Value;
+use std::process::Command;
 
-pub fn compile_solidity(dir: &str) {
-    let project = Project::builder()
-        .paths(ProjectPathsConfig::hardhat(env!("CARGO_MANIFEST_DIR")).unwrap())
-        .build()
-        .unwrap();
-    let output = project.compile().unwrap();
-    project.rerun_if_sources_changed();
+pub fn compile_solidity(file_name : &str) {
+    let output = Command::new("solc")
+        .arg("--version")
+        .output()
+        .expect("Failed to run solc command");
+
+    if output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        println!("solc version: {}", stdout);
+
+        let compile_result = Command::new("solc")
+            .arg("--abi")
+            .arg("--bin")
+            .arg("--overwrite")
+            .arg("--optimize")
+            .arg("--optimize-runs")
+            .arg("200")
+            .arg("--output-dir")
+            .arg("artifacts")
+            .arg(file_name)
+            .output()
+            .expect("Failed to run solc command");
+        
+        dbg!(&compile_result);
+    } else {
+        eprintln!(
+            "Please install solc and add it to your PATH - more details on https://docs.soliditylang.org/en/v0.8.17/installing-solidity.html"
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        eprintln!("Error running solc command: {}", stderr);
+        std::process::exit(1);
+    }
     println!("Compiled contracts successfully!");
 }
 
