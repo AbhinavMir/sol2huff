@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 mod helpers;
-use helpers::{compile_solidity, find_all_sol_files, get_bytecode_and_path_from_json, bytecode_to_huff};
+use helpers::{compile_solidity, find_all_json_files, get_bytecode_and_path_from_json, bytecode_to_huff};
 
 fn main() {
     let matches = App::new("Sol2Huff")
@@ -42,14 +42,9 @@ fn main() {
         .unwrap_or("artifacts");
     let verbose = matches.is_present("verbose");
 
-    let sol_files = find_all_sol_files(contracts_dir);
+    compile_solidity(contracts_dir);
+    let sol_files = find_all_json_files(artifacts_dir);
     for (file_name, _) in sol_files.iter() {
-        println!("Compiling {}...", file_name);
-}
-
-fn strip_sol_extension(file_name: &str) -> String {
-    if file_name.ends_with(".sol") {
-        return file_name[..file_name.len() - 4].to_string();
+        println!("INFO:Transpiling {}...", file_name);
     }
-    file_name.to_string()
 }

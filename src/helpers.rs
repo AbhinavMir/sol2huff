@@ -1,12 +1,12 @@
 // helpers.rs
 
 use ethers_solc::{ Project, ProjectPathsConfig };
-use murph::parser;
+use murph::{parser, formatter};
 use std::fs;
 use std::collections::HashMap;
 use serde_json::Value;
 
-pub fn compile_solidity(dir) {
+pub fn compile_solidity(dir: &str) {
     let project = Project::builder()
         .paths(ProjectPathsConfig::hardhat(env!("CARGO_MANIFEST_DIR")).unwrap())
         .build()
@@ -16,7 +16,7 @@ pub fn compile_solidity(dir) {
     println!("Compiled contracts successfully!");
 }
 
-fn find_all_sol_files(dir: &str) -> HashMap<String, bool> {
+pub fn find_all_sol_files(dir: &str) -> HashMap<String, bool> {
     let mut sol_files: HashMap<String, bool> = HashMap::new();
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries {
@@ -30,6 +30,22 @@ fn find_all_sol_files(dir: &str) -> HashMap<String, bool> {
         }
     }
     sol_files
+}
+
+pub fn find_all_json_files(dir: &str) -> HashMap<String, bool> {
+    let mut json_files: HashMap<String, bool> = HashMap::new();
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if let Some(file_name) = entry.file_name().to_str() {
+                    if entry.file_type().unwrap().is_file() && file_name.ends_with(".json") {
+                        json_files.insert(file_name.to_string(), false);
+                    }
+                }
+            }
+        }
+    }
+    json_files
 }
 
 pub fn get_bytecode_and_path_from_json(
@@ -55,16 +71,15 @@ pub fn get_bytecode_and_path_from_json(
 // }
 
 pub fn bytecode_to_huff(bytecode: String, path: String, verbose: bool) {
-    let huff = parser::parse(bytecode, false);
-    let path = format!("{}.huff", path);
+    let huff = formatter::to_huff(&mut parser::parse(bytecode, false));
     write_to_file(&huff, &path, verbose);
 }
 
 fn write_to_file(content: &str, path: &str, verbose: bool) {
     let path = strip_sol_extension(path);
-    let path = format!("{}.huff", path);
-    let mut file = File::create(path).expect("Failed to create file");
-    file.write_all(content.as_bytes()).expect("Failed to write to file");
+    // add .huff suffix and huff directory prefix
+    let path = format!("huff/{}.huff", path);
+    fs::write(&path, content).expect("Failed to write to file");
     if verbose {
         println!("Transpiled Huff written to {} successfully", path);
     }

@@ -12,3 +12,5 @@ reqwest = { version = "0.11.4", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 clap = "2.33.3"
+
+#![allow(warnings)]
