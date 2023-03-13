@@ -9,7 +9,7 @@ Sol2Huff is a command-line tool for transpiling Solidity contracts to Huff.
 
 ## Installation
 
-`cargo +nightly install --git git@github.com:AbhinavMir/sol2huff.git`
+`cargo +nightly install --git https://github.com/abhinavmir/sol2huff`
 
 ## Usage
 
